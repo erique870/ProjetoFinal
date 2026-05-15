@@ -1,0 +1,16 @@
+--extra-index-url https://download.pytorch.org/whl/cu12
+
+torch
+torchvision
+torchaudio
+transformers==4.44.0 
+datasets 
+evaluate
+wandb
+protobuf
+scipy
+sentencepiece
+accelerate==0.33.0 
+trl
+bitsandbytes==0.43.0 
+peft==0.12.0
