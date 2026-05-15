@@ -1,1 +1,7 @@
 env/
+=0.46.1
+argparse
+os
+wandb
+src/__pycache__/dataset.cpython-312.pyc
+src/__pycache__/model.cpython-312.pyc

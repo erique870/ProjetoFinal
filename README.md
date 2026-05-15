@@ -18,6 +18,8 @@ Os drivers da placa Nvidia das máquinas do IMPATech estão desatualizados em re
 pip uninstall torch torchvision torchaudio -y
 
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
+
 ```
 
+Pendente: Documentar instalações de adequação do `bitsandbytes` com a versão cuda das máquinas do IMPATech.
 
