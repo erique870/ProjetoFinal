@@ -125,7 +125,7 @@ def treinar(args: argparse.Namespace) -> None:
         # Otimizador
         learning_rate=args.lr,
         lr_scheduler_type="cosine",
-        warmup_ratio=0.05,
+        warmup_steps=50,             # warmup_ratio=0.05,
         weight_decay=0.01,
         optim="paged_adamw_32bit",   # Otimizado para QLoRA
 
@@ -159,7 +159,7 @@ def treinar(args: argparse.Namespace) -> None:
         args=sft_config,
         train_dataset=dataset["train"],
         eval_dataset=dataset["test"],
-        # tokenizer=tokenizer, # PENDENTEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+        processing_class=tokenizer,
         callbacks=[LogCallback()],
     )
 
