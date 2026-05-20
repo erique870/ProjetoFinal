@@ -315,6 +315,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--dataset",     type=str, default="Polygl0t/gsm8k-pt")
     p.add_argument("--n_amostras",  type=int, default=200)
     p.add_argument("--max_tokens",  type=int, default=300)
+    p.add_argument("--rank", type=int, default=None, help="Rank para montar os diretórios automaticamente.")
     p.add_argument("--so_lora",     action="store_true", help="Avaliar apenas LoRA.")
     p.add_argument("--so_dora",     action="store_true", help="Avaliar apenas DoRA.")
     return p.parse_args()
@@ -322,6 +323,11 @@ def parse_args() -> argparse.Namespace:
 
 if __name__ == "__main__":
     args = parse_args()
+
+    # Se --rank fornecido, monta os diretórios automaticamente
+    if args.rank is not None:
+        args.lora_dir = f"resultados/lora/r{args.rank}-ep{args.epochs}"
+        args.dora_dir = f"resultados/dora/r{args.rank}-ep{args.epochs}"
 
     from datasets import load_dataset
     print(f"[evaluate] Carregando dataset: {args.dataset}")
@@ -341,7 +347,7 @@ if __name__ == "__main__":
             n_amostras=args.n_amostras,
             max_new_tokens=args.max_tokens,
         )
-        salvar(res_lora, "resultados/lora/avaliacao.json")
+        salvar(res_lora, f"{args.lora_dir}/avaliacao.json")   # <-- era hardcoded
         del model, tok
         torch.cuda.empty_cache()
 
@@ -356,7 +362,7 @@ if __name__ == "__main__":
             n_amostras=args.n_amostras,
             max_new_tokens=args.max_tokens,
         )
-        salvar(res_dora, "resultados/dora/avaliacao.json")
+        salvar(res_dora, f"{args.dora_dir}/avaliacao.json")   # <-- era hardcoded
 
     if res_lora and res_dora:
         comparar(res_lora, res_dora)

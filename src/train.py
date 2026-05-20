@@ -79,7 +79,7 @@ class LogCallback(TrainerCallback):
 
 def treinar(args: argparse.Namespace) -> None:
     use_dora = args.tecnica == "dora"
-    output_dir = os.path.join("resultados", args.tecnica)
+    output_dir = os.path.join("resultados", args.tecnica, f"r{args.rank}-ep{args.epochs}")
     run_name = f"{args.tecnica}_r{args.rank}_a{args.alpha}"
 
     print(f"\n{'='*60}")
