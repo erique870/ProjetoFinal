@@ -316,6 +316,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--n_amostras",  type=int, default=200)
     p.add_argument("--max_tokens",  type=int, default=300)
     p.add_argument("--rank", type=int, default=None, help="Rank para montar os diretórios automaticamente.")
+    p.add_argument("--epochs", type=int, default=None, help="Quantidade de épocas usadas para o treinamento do modelo.")
     p.add_argument("--so_lora",     action="store_true", help="Avaliar apenas LoRA.")
     p.add_argument("--so_dora",     action="store_true", help="Avaliar apenas DoRA.")
     return p.parse_args()
