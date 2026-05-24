@@ -37,10 +37,10 @@ Tabela atual (Primeira Bateria de Treinamentos):
 |DORA r32 a64   |3       |4h12min2s             |37.00% (74/200) |2.205             |99.00%                 |20/05/26          |
 |LORA r64 a128  |3       |1h34min2s             |39.00% (78/200) |2.45              |99.50%                 |20/05/26          |
 |DORA r64 a128  |3       |4h15min               |35.50% (71/200) |2.33              |100.00%                |20/05/26          |
-|LORA r128 a256 |3       |1h35min40s            |                |                  |                       |22/05/26          |
-|DORA r128 a256 |3       |4h18min16s            |                |                  |                       |22/05/26          |
-|LORA r256 a512 |3       |1h37min43s            |                |                  |                       |22/05/26          |
-|DORA r256 a512 |3       |4h27min42s            |                |                  |                       |22/05/26          |
+|LORA r128 a256 |3       |1h35min40s            |35.00% (70/200) |2.43              |100.00%                |22/05/26          |
+|DORA r128 a256 |3       |4h18min16s            |38.00% (76/200) |2.395             |100.00%                |22/05/26          |
+|LORA r256 a512 |3       |1h37min43s            |38.00% (76/200) |2.4               |99.50%                 |22/05/26          |
+|DORA r256 a512 |3       |4h27min42s            |32.00% (64/200) |2.295             |100.00%                |22/05/26          |
 
 
 Primeiro overview: Variar apenas o rank levou a uma acurácia no range $[30, 40]$, insatisfatório. É preciso usar papers e artigos.
