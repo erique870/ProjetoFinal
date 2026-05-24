@@ -11,14 +11,15 @@ from datasets import load_dataset, DatasetDict
 
 PROMPT_TEMPLATE = """\
 ### Instrução:
-Resolva o seguinte problema matemático passo a passo em português.
- 
+Resolva o problema passo a passo. Numere cada passo. Ao final, escreva a resposta no formato: #### <número>
+
 ### Problema:
 {question}
- 
-### Raciocínio e Resposta:
+
+### Solução:
 {answer}"""
- 
+
+
 PROMPT_TEMPLATE_INFERENCE = """\
 ### Instrução:
 Resolva o seguinte problema matemático passo a passo em português.
