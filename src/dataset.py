@@ -28,7 +28,7 @@ Resolva o seguinte problema matemático passo a passo em português.
 {question}
  
 ### Raciocínio e Resposta:
-"""
+""" 
  
 
 
