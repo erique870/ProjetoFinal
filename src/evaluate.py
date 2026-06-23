@@ -450,6 +450,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--so_lora",     action="store_true", help="Avaliar apenas LoRA.")
     p.add_argument("--so_dora",     action="store_true", help="Avaliar apenas DoRA.")
     p.add_argument("--baseline", action="store_true", help="Avaliar modelo base sem fine-tuning.")
+    p.add_argument("--lr_tag", type=str, default="2en4", help="Tag do lr para o diretório (ex: 2e-4). Se None, usa o valor de --lr.")
     return p.parse_args()
 
 
@@ -458,8 +459,8 @@ if __name__ == "__main__":
 
     # Se --rank fornecido, monta os diretórios automaticamente
     if args.rank is not None:
-        args.lora_dir = f"resultados/lora/r{args.rank}-ep{args.epochs}"
-        args.dora_dir = f"resultados/dora/r{args.rank}-ep{args.epochs}"
+        args.lora_dir = f"resultados/lora/r{args.rank}-ep{args.epochs}-lr{args.lr_tag}"
+        args.dora_dir = f"resultados/dora/r{args.rank}-ep{args.epochs}-lr{args.lr_tag}"
 
     from datasets import load_dataset
     print(f"[evaluate] Carregando dataset: {args.dataset}")

@@ -45,6 +45,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--batch",     type=int,   default=2,    help="Batch por GPU.")
     parser.add_argument("--grad_acc",  type=int,   default=4,    help="Acumulação de gradiente.")
     parser.add_argument("--lr",        type=float, default=2e-4)
+    parser.add_argument("--lr_tag", type=str, default="2en4", help="Tag do lr para o diretório (ex: 2e-4). Se None, usa o valor de --lr.")
     parser.add_argument("--max_len",   type=int,   default=512,  help="Comprimento máximo de tokens.")
     parser.add_argument("--wandb",     action="store_true",      help="Ativar logging no W&B.")
     parser.add_argument("--dataset",   type=str,   default="Polygl0t/gsm8k-pt")
@@ -79,7 +80,7 @@ class LogCallback(TrainerCallback):
 
 def treinar(args: argparse.Namespace) -> None:
     use_dora = args.tecnica == "dora"
-    output_dir = os.path.join("resultados", args.tecnica, f"r{args.rank}-ep{args.epochs}")
+    output_dir = os.path.join("resultados", args.tecnica, f"r{args.rank}-ep{args.epochs}-lr{args.lr_tag}")
     run_name = f"{args.tecnica}_r{args.rank}_a{args.alpha}"
 
     print(f"\n{'='*60}")
