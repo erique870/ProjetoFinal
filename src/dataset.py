@@ -1,5 +1,6 @@
 import re
-from datasets import load_dataset, DatasetDict
+from datasets import load_dataset, DatasetDict, Dataset
+import random
 
 
 
@@ -111,6 +112,84 @@ def preparar_dataset(dataset: DatasetDict, num_proc: int = 4) -> DatasetDict:
     return dataset_formatado
 
 
+def preparar_dataset_com_validacao(dataset: DatasetDict, seed: int = 42) -> DatasetDict:
+    """
+    Divide train em train/val (90/10), mantém test intocado.
+    Usar para evitar overfitting na seleção de checkpoint via eval_dataset.
+    """
+    train_val = dataset["train"].train_test_split(test_size=0.1, seed=seed)
+    return DatasetDict({
+        "train": train_val["train"],
+        "validation": train_val["test"],
+        "test": dataset["test"],
+    })
+
+
+
+def preparar_dataset_merge_pt_en(
+    pares_pt_en: list[tuple[dict, dict]],
+    seed: int = 42,
+) -> DatasetDict:
+    """
+    Constrói dataset de data augmentation a partir de tuplas (exemplo_pt, exemplo_en)
+    do MESMO problema.
+
+    O split train/val é feito sobre os PARES, garantindo que pt e en do mesmo
+    problema fiquem sempre no mesmo split. Depois do split, os pares são
+    desfeitos e os exemplos pt+en se misturam livremente dentro de cada split.
+
+    Args:
+        pares_pt_en: Lista de tuplas (dict_pt, dict_en), cada dict com
+                     chaves 'question' e 'answer'.
+        seed: Seed para shuffle e split.
+
+    Returns:
+        DatasetDict com 'train', 'validation' (pt+en misturados) e
+        'test' (GSM8K-ptbr original, para métrica comparável).
+    """
+
+    rng = random.Random(seed)
+    indices = list(range(len(pares_pt_en)))
+    rng.shuffle(indices)
+
+    n_val = int(len(indices) * 0.1)
+    indices_val = set(indices[:n_val])
+    indices_train = set(indices[n_val:])
+
+    def _formatar_par(idx: int) -> list[dict]:
+        ex_pt, ex_en = pares_pt_en[idx]
+        registros = []
+        for ex in (ex_pt, ex_en):
+            fmt = formatar_exemplo(ex, modo="treino")
+            registros.append({
+                "question": ex["question"],
+                "answer": ex["answer"],
+                "text": fmt["text"],
+            })
+        return registros
+
+    registros_train = []
+    for idx in indices_train:
+        registros_train.extend(_formatar_par(idx))
+
+    registros_val = []
+    for idx in indices_val:
+        registros_val.extend(_formatar_par(idx))
+
+    ds_train = Dataset.from_list(registros_train).shuffle(seed=seed)
+    ds_val   = Dataset.from_list(registros_val).shuffle(seed=seed)
+
+    ds_ptbr_original = carregar_gsm8k_ptbr()
+
+    print(f"[dataset] Merge pt/en: {len(indices_train)} pares treino "
+          f"({len(registros_train)} exemplos) | "
+          f"{len(indices_val)} pares val ({len(registros_val)} exemplos)")
+
+    return DatasetDict({
+        "train": ds_train,
+        "validation": ds_val,
+        "test": ds_ptbr_original["test"],
+    })
 
 # ---------------------------------------------------------------------------
 # Sanidade de extração de resposta final

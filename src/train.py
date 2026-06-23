@@ -12,11 +12,12 @@ Uso:
 
 import argparse
 import os
+import json
 import wandb
 from transformers import TrainerCallback
 from trl import SFTTrainer, SFTConfig
 
-from dataset import carregar_gsm8k_ptbr, preparar_dataset
+from dataset import carregar_gsm8k_ptbr, preparar_dataset, preparar_dataset_com_validacao, preparar_dataset_merge_pt_en
 from model import preparar_modelo_peft
 
 
@@ -49,6 +50,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max_len",   type=int,   default=512,  help="Comprimento máximo de tokens.")
     parser.add_argument("--wandb",     action="store_true",      help="Ativar logging no W&B.")
     parser.add_argument("--dataset",   type=str,   default="Polygl0t/gsm8k-pt")
+    parser.add_argument("--dataset_mode", type=str, choices=["padrao", "merge_pt_en"], default="padrao", help="'padrao' usa o dataset pt-br normal; 'merge_pt_en' usa data augmentation pt+en.",)
 
     return parser.parse_args()
 
@@ -99,8 +101,17 @@ def treinar(args: argparse.Namespace) -> None:
         )
 
     # --- Dataset ---
-    dataset_raw = carregar_gsm8k_ptbr(args.dataset)
-    dataset = preparar_dataset(dataset_raw)
+    
+    if args.dataset_mode == "merge_pt_en":
+        with open("data/pares_pt_en.json", "r", encoding="utf-8") as f:
+            pares_raw = json.load(f)
+        pares_pt_en = [(p[0], p[1]) for p in pares_raw]
+
+        dataset = preparar_dataset_merge_pt_en(pares_pt_en)
+    else:
+        dataset_raw = carregar_gsm8k_ptbr(args.dataset)
+        dataset_raw = preparar_dataset_com_validacao(dataset_raw)
+        dataset = preparar_dataset(dataset_raw)
 
     # --- Modelo ---
     model, tokenizer = preparar_modelo_peft(
@@ -159,7 +170,7 @@ def treinar(args: argparse.Namespace) -> None:
         model=model,
         args=sft_config,
         train_dataset=dataset["train"],
-        eval_dataset=dataset["test"],
+        eval_dataset=dataset["validation"],
         processing_class=tokenizer,
         callbacks=[LogCallback()],
     )
