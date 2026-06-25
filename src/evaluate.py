@@ -445,6 +445,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--dataset",     type=str, default="Polygl0t/gsm8k-pt")
     p.add_argument("--n_amostras",  type=int, default=200)
     p.add_argument("--max_tokens",  type=int, default=300)
+    p.add_argument("--batch",     type=int,   default=2,    help="Batch por GPU.")           # Suporte a Batchs Distintos
+    p.add_argument("--grad_acc",  type=int,   default=4,    help="Acumulação de gradiente.") # Suporte a Batchs Distintos
     p.add_argument("--rank", type=int, default=None, help="Rank para montar os diretórios automaticamente.")
     p.add_argument("--epochs", type=int, default=None, help="Quantidade de épocas usadas para o treinamento do modelo.")
     p.add_argument("--so_lora",     action="store_true", help="Avaliar apenas LoRA.")
@@ -459,8 +461,8 @@ if __name__ == "__main__":
 
     # Se --rank fornecido, monta os diretórios automaticamente
     if args.rank is not None:
-        args.lora_dir = f"resultados/lora/r{args.rank}-ep{args.epochs}-lr{args.lr_tag}"
-        args.dora_dir = f"resultados/dora/r{args.rank}-ep{args.epochs}-lr{args.lr_tag}"
+        args.lora_dir = f"resultados/lora/r{args.rank}-ep{args.epochs}-lr{args.lr_tag}-b{args.batch}x{args.grad_acc}"
+        args.dora_dir = f"resultados/dora/r{args.rank}-ep{args.epochs}-lr{args.lr_tag}-b{args.batch}x{args.grad_acc}"
 
     from datasets import load_dataset
     print(f"[evaluate] Carregando dataset: {args.dataset}")

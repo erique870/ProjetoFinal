@@ -14,7 +14,7 @@ import argparse
 import os
 import json
 import wandb
-from transformers import TrainerCallback
+from transformers import TrainerCallback, EarlyStoppingCallback
 from trl import SFTTrainer, SFTConfig
 
 from dataset import carregar_gsm8k_ptbr, preparar_dataset, preparar_dataset_com_validacao, preparar_dataset_merge_pt_en
@@ -51,6 +51,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--wandb",     action="store_true",      help="Ativar logging no W&B.")
     parser.add_argument("--dataset",   type=str,   default="Polygl0t/gsm8k-pt")
     parser.add_argument("--dataset_mode", type=str, choices=["padrao", "merge_pt_en"], default="padrao", help="'padrao' usa o dataset pt-br normal; 'merge_pt_en' usa data augmentation pt+en.",)
+    parser.add_argument("--early_stopping_patience", type=int, default=None, help="Nº de avaliações sem melhora antes de parar. None desativa early stopping.",)
 
     return parser.parse_args()
 
@@ -82,7 +83,7 @@ class LogCallback(TrainerCallback):
 
 def treinar(args: argparse.Namespace) -> None:
     use_dora = args.tecnica == "dora"
-    output_dir = os.path.join("resultados", args.tecnica, f"r{args.rank}-ep{args.epochs}-lr{args.lr_tag}")
+    output_dir = os.path.join("resultados", args.tecnica, f"r{args.rank}-ep{args.epochs}-lr{args.lr_tag}-b{args.batch}x{args.grad_acc}")
     run_name = f"{args.tecnica}_r{args.rank}_a{args.alpha}"
 
     print(f"\n{'='*60}")
@@ -157,22 +158,28 @@ def treinar(args: argparse.Namespace) -> None:
         logging_steps=10,
         eval_strategy="epoch",
         save_strategy="epoch",
-        save_total_limit=2,
+        save_total_limit=args.epochs, # Guarda um checkpoint por epoch
         load_best_model_at_end=True,
         metric_for_best_model="eval_loss",
+        greater_is_better=False,   # <-- adiciona isso explicitamente (loss menor é melhor)
 
         # W&B
         report_to="wandb" if args.wandb else "none",
     )
 
     # --- Trainer ---
+
+    callbacks=[LogCallback()]
+    if args.early_stopping_patience is not None:
+        callbacks.append(EarlyStoppingCallback(early_stopping_patience=args.early_stopping_patience))
+
     trainer = SFTTrainer(
         model=model,
         args=sft_config,
         train_dataset=dataset["train"],
         eval_dataset=dataset["validation"],
         processing_class=tokenizer,
-        callbacks=[LogCallback()],
+        callbacks=callbacks,
     )
 
     # --- Treino ---
