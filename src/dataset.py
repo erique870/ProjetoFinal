@@ -156,38 +156,41 @@ def preparar_dataset_merge_pt_en(
     indices_val = set(indices[:n_val])
     indices_train = set(indices[n_val:])
 
-    def _formatar_par(idx: int) -> list[dict]:
-        ex_pt, ex_en = pares_pt_en[idx]
-        registros = []
-        for ex in (ex_pt, ex_en):
-            fmt = formatar_exemplo(ex, modo="treino")
-            registros.append({
-                "question": ex["question"],
-                "answer": ex["answer"],
-                "text": fmt["text"],
-            })
-        return registros
-
+    def _formatar_exemplo_unico(ex: dict) -> dict:
+        fmt = formatar_exemplo(ex, modo="treino")
+        return {"question": ex["question"], "answer": ex["answer"], "text": fmt["text"]}
+    
+    # --- Treino: pt + en misturados, como antes ---
     registros_train = []
     for idx in indices_train:
-        registros_train.extend(_formatar_par(idx))
+        ex_pt, ex_en = pares_pt_en[idx]
+        registros_train.append(_formatar_exemplo_unico(ex_pt))
+        registros_train.append(_formatar_exemplo_unico(ex_en))
 
-    registros_val = []
+
+    # --- Validação: SEPARADA por idioma ---
+    registros_val_pt = []
+    registros_val_en = []
     for idx in indices_val:
-        registros_val.extend(_formatar_par(idx))
+        ex_pt, ex_en = pares_pt_en[idx]
 
-    ds_train = Dataset.from_list(registros_train).shuffle(seed=seed)
-    ds_val   = Dataset.from_list(registros_val).shuffle(seed=seed)
+        registros_val_pt.append(_formatar_exemplo_unico(ex_pt))
+        registros_val_en.append(_formatar_exemplo_unico(ex_en))
+
+    ds_train  = Dataset.from_list(registros_train).shuffle(seed=seed)
+    ds_val_pt = Dataset.from_list(registros_val_pt).shuffle(seed=seed)
+    ds_val_en = Dataset.from_list(registros_val_en).shuffle(seed=seed)
 
     ds_ptbr_original = carregar_gsm8k_ptbr()
 
     print(f"[dataset] Merge pt/en: {len(indices_train)} pares treino "
           f"({len(registros_train)} exemplos) | "
-          f"{len(indices_val)} pares val ({len(registros_val)} exemplos)")
+          f"val_pt={len(registros_val_pt)} | val_en={len(registros_val_en)}")
 
     return DatasetDict({
         "train": ds_train,
-        "validation": ds_val,
+        "validation": ds_val_pt,    # <-- usado para metric_for_best_model
+        "validation_en": ds_val_en, # <-- monitoramento extra, não usado na seleção
         "test": ds_ptbr_original["test"],
     })
 
