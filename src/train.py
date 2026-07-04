@@ -16,6 +16,8 @@ import json
 import wandb
 from transformers import TrainerCallback, EarlyStoppingCallback
 from trl import SFTTrainer, SFTConfig
+from muon import Muon
+import torch
 
 from dataset import carregar_gsm8k_ptbr, preparar_dataset, preparar_dataset_com_validacao, preparar_dataset_merge_pt_en
 from model import preparar_modelo_peft
@@ -52,6 +54,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dataset",   type=str,   default="Polygl0t/gsm8k-pt")
     parser.add_argument("--dataset_mode", type=str, choices=["padrao", "merge_pt_en"], default="padrao", help="'padrao' usa o dataset pt-br normal; 'merge_pt_en' usa data augmentation pt+en.",)
     parser.add_argument("--early_stopping_patience", type=int, default=None, help="Nº de avaliações sem melhora antes de parar. None desativa early stopping.",)
+    parser.add_argument("--muon", action="store_true", help="Usar otimizador Muon nos adaptadores LoRA.")
 
     return parser.parse_args()
 
@@ -82,6 +85,18 @@ class LogCallback(TrainerCallback):
 
 
 def treinar(args: argparse.Namespace) -> None:
+
+        # Inicializa process group para o Muon funcionar em GPU única
+    if args.muon:
+        import torch.distributed as dist
+        if not dist.is_initialized():
+            os.environ["MASTER_ADDR"] = "localhost"
+            os.environ["MASTER_PORT"] = "29500"
+            os.environ["RANK"] = "0"
+            os.environ["WORLD_SIZE"] = "1"
+            dist.init_process_group(backend="gloo")
+            print("[train] Process group inicializado para Muon (single GPU).")
+
     use_dora = args.tecnica == "dora"
     output_dir = os.path.join("resultados", args.tecnica, f"r{args.rank}-ep{args.epochs}-lr{args.lr_tag}-b{args.batch}x{args.grad_acc}")
     run_name = f"{args.tecnica}_r{args.rank}_a{args.alpha}"
@@ -168,6 +183,18 @@ def treinar(args: argparse.Namespace) -> None:
     )
 
     # --- Trainer ---
+    if args.muon:
+        lora_matrix_params = [
+            p for n, p in model.named_parameters()
+            if p.requires_grad and p.ndim >= 2
+        ]
+
+        # Log para confirmar que encontrou parâmetros
+        print(f"[train] Muon: {len(lora_matrix_params)} tensores 2D treináveis")
+
+        optimizer = Muon(lora_matrix_params, lr=args.lr, momentum=0.95)
+    else:
+        optimizer = None
 
     callbacks=[LogCallback()]
     if args.early_stopping_patience is not None:
@@ -180,6 +207,7 @@ def treinar(args: argparse.Namespace) -> None:
         eval_dataset=dataset["validation"],
         processing_class=tokenizer,
         callbacks=callbacks,
+        optimizers=(optimizer, None) if args.muon else (None, None),
     )
 
     # --- Treino ---
