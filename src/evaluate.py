@@ -200,41 +200,6 @@ def tem_calculo_explicito(texto: str) -> bool:
 # Geração
 # ---------------------------------------------------------------------------
 
-
-
-"""
-def gerar_resposta(
-    model,
-    tokenizer,
-    pergunta: str,
-    max_new_tokens: int = 300,
-) -> str:
-    """"""Gera raciocínio + resposta para uma pergunta. Usa greedy decoding.""""""
-    prompt = PROMPT_INFERENCIA.format(question=pergunta)
-    inputs = tokenizer(
-        prompt,
-        return_tensors="pt",
-        truncation=True,
-        max_length=512,
-    ).to(model.device)
-
-    with torch.no_grad():
-        output_ids = model.generate(
-            **inputs,
-            max_new_tokens=max_new_tokens,
-            do_sample=False,
-            repetition_penalty=1.1,
-            eos_token_id=tokenizer.eos_token_id,
-            pad_token_id=tokenizer.pad_token_id,
-        )
-
-    # Descarta tokens do prompt, decodifica apenas o gerado
-    n_prompt = inputs["input_ids"].shape[-1]
-    return tokenizer.decode(output_ids[0][n_prompt:], skip_special_tokens=True).strip()
-
-"""
-
-# teste
 def gerar_resposta(
     model,
     tokenizer,

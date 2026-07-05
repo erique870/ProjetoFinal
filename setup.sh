@@ -1,7 +1,5 @@
 #!/bin/bash
 
-cd /home/al.erique.silva/projeto_lora_dora
-
 python3 -m venv env
 
 source env/bin/activate
